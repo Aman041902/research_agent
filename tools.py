@@ -20,10 +20,20 @@ def web_search(query: str) -> str:
 
   return out
 
-results = web_search.invoke("Recent development in Open-Source LLMs")
+@tool
+def scrape_url(url:str) -> str:
+  """Scrape the content of the given URL and return the text."""
+  try:
+    response = requests.get(url,timeout=10,headers={'User-Agent': 'Mozilla/5.0'})
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    for tag in soup(['script', 'style', 'header', 'footer', 'nav']):
+        tag.decompose()
+    
+    return soup.get_text(separator=' ', strip=True)[:1000]
+  except Exception as e:
+    return f"Error scraping the URL: {e}"
 
 
-for i in results:
-  print(i)
-  print("\n\n")
+
 
