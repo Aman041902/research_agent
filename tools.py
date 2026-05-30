@@ -1,6 +1,5 @@
 from langchain.tools import tool
 import requests
-from bs4 import BeautifulSoup
 from tavily import TavilyClient
 import os
 from dotenv import load_dotenv
@@ -11,29 +10,42 @@ load_dotenv()
 tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
 @tool
-def web_search(query: str) -> str:
-  """Search the web for the given query and return the Titles,URLs and descriptions."""
-  results = tavily.search(query,max_results=3)
-  out = []
-  for r in results['results']:
-    out.append(f"Title: {r['title']}\nURL: {r['url']}\nDescription: {r['content']}\n")
+def web_search(query: str):
+    """Search the web and return structured results."""
+    
+    results = tavily.search(query, max_results=3)
 
-  return out
+    out = []
+
+    for r in results["results"]:
+        out.append({
+            "title": r["title"],
+            "url": r["url"],
+            "description": r["content"]
+        })
+
+    return out
 
 @tool
-def scrape_url(url:str) -> str:
-  """Scrape the content of the given URL and return the text."""
-  try:
-    response = requests.get(url,timeout=10,headers={'User-Agent': 'Mozilla/5.0'})
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    for tag in soup(['script', 'style', 'header', 'footer', 'nav']):
-        tag.decompose()
-    
-    return soup.get_text(separator=' ', strip=True)[:1000]
-  except Exception as e:
-    return f"Error scraping the URL: {e}"
+def scrape_url(url: str) -> dict:
+    """Scrape a URL via Jina Reader (handles JS-rendered pages)."""
+    try:
+        jina_url = f"https://r.jina.ai/{url}"
+        response = requests.get(
+            jina_url,
+            timeout=30,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        response.raise_for_status()
 
+        # Jina returns clean markdown text directly
+        text = response.text
+        title_line = next(
+            (l for l in text.splitlines() if l.startswith("Title:")), ""
+        )
+        title = title_line.replace("Title:", "").strip() or "No title"
 
+        return {"url": url, "title": title, "content": text[:5000]}
 
-
+    except Exception as e:
+        return {"url": url, "error": str(e)}
