@@ -28,7 +28,7 @@ ResearchMind is a Streamlit-based multi-agent research assistant that chains tog
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/<your-username>/research_agent.git
+git clone https://github.com/<Aman041902>/research_agent.git
 cd research_agent
 ```
 
