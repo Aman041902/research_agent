@@ -100,6 +100,4 @@ The app uses environment variables loaded from `.env`:
 - Save generated reports to files automatically.
 - Add support for multiple search results and content aggregation.
 
-## License
 
-Add a license file if you want to publish this repository publicly.
